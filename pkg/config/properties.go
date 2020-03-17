@@ -1,6 +1,7 @@
 package config
 
 import (
+    "flag"
     "github.com/magiconair/properties"
     "log"
     "os/exec"
@@ -39,6 +40,8 @@ type config struct {
 var Properties config
 var Password   string
 var BaseURL    string
+var Role       string
+var AccountId  string
 
 func init() {
     props := properties.MustLoadFile(configPropertiesFilepath, properties.UTF8)
@@ -49,6 +52,13 @@ func init() {
 
     BaseURL = "https://" + Properties.Organization
     loadPassword()
+
+    role := flag.String("role", "ExampleRole", "The name of the IAM role to assume")
+    account := flag.String("account", "123456789", "The ID of the AWS account to use")
+    flag.Parse()
+
+    Role = *role
+    AccountId = *account
 }
 
 func loadPassword() {

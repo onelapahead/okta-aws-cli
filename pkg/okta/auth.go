@@ -4,6 +4,7 @@ import (
     "bytes"
     "encoding/json"
     "errors"
+    "github.com/RobotsAndPencils/go-saml"
     "github.com/hfuss/okta-aws-cli/v2/pkg/config"
     "golang.org/x/net/html"
     "golang.org/x/net/publicsuffix"
@@ -11,6 +12,7 @@ import (
     "net/http"
     "net/http/cookiejar"
     "net/url"
+    "strings"
     "time"
 )
 
@@ -155,10 +157,34 @@ func getSamlAssertion() string {
     return samlAssertion
 }
 
+func extractPrincipalAndRoleArns(samlAssertion string) (string, string) {
+    // TODO consider other SAML parsers
+    response, err := saml.ParseEncodedResponse(samlAssertion)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    for _, attr := range response.Assertion.AttributeStatement.Attributes {
+        if attr.Name == "https://aws.amazon.com/SAML/Attributes/Role" {
+            for _, val := range attr.AttributeValues {
+                // TODO better parsing and validation of role
+               if strings.Contains(val.Value, config.AccountId) && strings.Contains(val.Value, config.Role) {
+                   arns := strings.Split(val.Value, ",")
+                   return arns[0], arns[1]
+               }
+            }
+        }
+    }
+    log.Fatal("Could not match role")
+    return "", ""
+}
+
 func LoginAws() {
     sessionToken := getSessionToken()
     sessionId := getSessionId(sessionToken)
     addCookie("sid", sessionId)
     assertion := getSamlAssertion()
-    log.Println(assertion)
+    principalArn, roleArn := extractPrincipalAndRoleArns(assertion)
+    log.Println(principalArn)
+    log.Println(roleArn)
 }

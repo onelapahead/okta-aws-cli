@@ -1,11 +1,7 @@
 package main
 
-import (
-    "github.com/hfuss/okta-aws-cli/v2/pkg/config"
-    "log"
-)
+import "github.com/hfuss/okta-aws-cli/v2/pkg/okta"
 
 func main() {
-
-    log.Println(config.Properties.Username)
+    okta.LoginAws()
 }

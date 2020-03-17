@@ -4,7 +4,9 @@ import (
     "bytes"
     "encoding/json"
     "errors"
+    "fmt"
     "github.com/RobotsAndPencils/go-saml"
+    "github.com/hfuss/okta-aws-cli/v2/pkg/aws"
     "github.com/hfuss/okta-aws-cli/v2/pkg/config"
     "golang.org/x/net/html"
     "golang.org/x/net/publicsuffix"
@@ -185,6 +187,11 @@ func LoginAws() {
     addCookie("sid", sessionId)
     assertion := getSamlAssertion()
     principalArn, roleArn := extractPrincipalAndRoleArns(assertion)
-    log.Println(principalArn)
-    log.Println(roleArn)
+
+    creds := aws.GetToken(roleArn, principalArn, assertion)
+    credsJson, err := json.Marshal(&creds)
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println(string(credsJson))
 }
